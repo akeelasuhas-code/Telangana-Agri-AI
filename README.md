@@ -21,7 +21,45 @@ process.env Injection: Secured API key management via Vite’s environment varia
 6. Deployment & Hosting
 Vercel: The app is optimized for Vercel’s Edge Network, ensuring low latency for users in the Telangana/Hyderabad region.
 PWA Ready: The architecture is designed to be easily converted into a Progressive Web App (PWA) so farmers can "install" it on their Android home screens without an App Store.
-
+1. Prerequisites
+Before you start, make sure you have the following installed:
+Node.js (LTS Version): Download from nodejs.org
+Git: Download from git-scm.com
+Google Gemini API Key: Get one for free from Google AI Studio
+2. Step-by-Step Installation
+Step 1: Clone the Repository
+Open your terminal (Command Prompt, PowerShell, or Terminal) and run:
+code
+Bash
+git clone https://github.com/YOUR_USERNAME/YOUR_REPO_NAME.git
+cd YOUR_REPO_NAME
+Step 2: Install Dependencies
+This will download all the required libraries (React, Gemini SDK, Tailwind, etc.) listed in your package.json.
+code
+Bash
+npm install
+Step 3: Set Up the API Key
+The application needs your Gemini API key to function. You must set this as an environment variable so Vite can pick it up.
+For Windows (PowerShell):
+code
+Powershell
+$env:API_KEY="your_actual_api_key_here"
+For Mac/Linux:
+code
+Bash
+export API_KEY="your_actual_api_key_here"
+(Alternatively, you can create a file named .env in the root folder and add VITE_API_KEY=your_key, but you would need to update the code to use import.meta.env.VITE_API_KEY. The method above is safer for your current configuration).
+Step 4: Run the Development Server
+Start the app locally:
+code
+Bash
+npm run dev
+Step 5: Open in Browser
+Once the terminal shows a link (usually http://localhost:5173), hold Ctrl (or Cmd) and click the link to open the app.
+3. Troubleshooting Common Issues
+"npm is not recognized": You haven't installed Node.js yet. Download it from the link in Step 1.
+API Key Error: If the AI says "Invalid API Key," make sure you restarted your terminal after setting the environment variable, or ensure the key has no spaces around it.
+Port already in use: If 5173 is busy, Vite will automatically try 5174. Just click the new link provided in the terminal.
 
 
 **Prerequisites:**  Node.js
