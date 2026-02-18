@@ -17,14 +17,14 @@ export interface GroundingSource {
 
 export interface PredictionData {
   crop: string;
-  quantity: number;
-  unit: 'kg' | 'quintal' | 'bags';
+  quantity?: number;
+  unit?: string;
   currentPrice: number;
   predictedPrice: number;
   recommendation: SellingRecommendation;
   risk: RiskLevel;
   explanation: string;
-  explanationTelugu: string;
+  explanationAudioScript: string;
   daysToWait: number;
   profitDelta: number;
   trendData: Array<{ day: string; price: number }>;
@@ -41,9 +41,4 @@ export interface ChatMessage {
   prediction?: PredictionData;
   timestamp: Date;
   imageUrl?: string;
-}
-
-export interface FarmerProfile {
-  location: string;
-  language: 'English' | 'Telugu';
 }

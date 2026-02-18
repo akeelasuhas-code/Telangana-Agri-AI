@@ -5,84 +5,43 @@ import { PredictionData, SellingRecommendation, RiskLevel, GroundingSource } fro
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 /**
- * Intelligent parser that extracts crop, quantity, unit (kg/quintal), and location.
+ * Intelligent multimodal analyst for market trends and quality.
  */
-export const parseFarmerQuery = async (text: string): Promise<{ crop: string; quantity: number; unit: 'kg' | 'quintal' | 'bags'; location: string } | null> => {
-  const prompt = `
-    Extract the crop details from this farmer query: "${text}"
-    
-    RULES:
-    - Identify the crop (e.g., Potato, Tomato, Paddy).
-    - Identify the quantity and UNIT (kg, quintal, or bags). 
-    - Default unit is 'quintal' if not specified, but check for 'kg' or 'bags'.
-    - Default Location: 'Telangana' or 'Hyderabad' if not mentioned.
-    
-    Return ONLY JSON.
-  `;
-
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3-flash-preview",
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            crop: { type: Type.STRING },
-            quantity: { type: Type.NUMBER },
-            unit: { type: Type.STRING, enum: ['kg', 'quintal', 'bags'] },
-            location: { type: Type.STRING }
-          },
-          required: ["crop", "quantity", "unit", "location"]
-        }
-      }
-    });
-    return JSON.parse(response.text);
-  } catch (e) {
-    console.error("Parsing error:", e);
-    return null;
-  }
-};
-
 export const getMarketAnalysis = async (
-  crop: string,
-  quantity: number,
-  unit: 'kg' | 'quintal' | 'bags',
-  location: string,
-  imageBase64?: string
+  query: string,
+  imageBase64?: string,
+  location: string = "Telangana"
 ): Promise<PredictionData> => {
   const parts: any[] = [
     {
       text: `
-        Act as a professional Indian Agricultural Market Analyst. 
-        Focus on real-time market data for ${location}, Telangana.
+        Act as a professional Indian Agricultural Market Analyst specializing in the Telangana/Hyderabad region.
+        USER QUERY: "${query}"
+        LOCATION: ${location}
 
-        CROP: ${crop}
-        QUANTITY: ${quantity} ${unit}
-
-        CORE REQUIREMENTS:
-        1. SEARCH: Use Google Search to find ACTUAL TODAY'S PRICE for ${crop} in major Telangana mandis (Warangal, Nizamabad, Hyderabad).
-        2. REALISM: Ensure the price is realistic. (e.g., Potatoes in India are ~₹20-40/kg, Tomatoes ~₹30-60/kg). 
-           Calculate the total value based on the farmer's ${quantity} ${unit}.
-        3. QUALITY: ONLY assess quality if an image is provided. If imageBase64 is NOT present, return null for qualityGrade and qualityAssessment.
-        4. ANALYSIS: Provide a 7-day trend. If prices are expected to rise due to low supply, suggest WAIT.
+        INSTRUCTIONS:
+        1. LANGUAGE DETECTION: Detect if the query is in Telugu or English. Respond in the SAME language for both 'explanation' and 'explanationAudioScript'.
+        2. LIVE SEARCH: Use Google Search to find ACTUAL TODAY'S prices for the mentioned crop in Telangana Mandis.
+        3. MULTIMODAL QUALITY: If an image is provided, analyze the crop quality (A=Excellent, B=Good, C=Average).
+        4. PREDICTION: Forecast the price for the next 7 days. 
+           - Suggest WAIT if a price increase > 10% is expected.
+           - Suggest SELL_NOW if prices are peaking or likely to drop.
 
         RETURN JSON:
         {
-          "crop": "${crop}",
-          "quantity": ${quantity},
-          "unit": "${unit}",
-          "currentPrice": number (price per ${unit} in INR),
-          "predictedPrice": number (predicted price per ${unit} in 5-7 days),
+          "crop": "Name of crop",
+          "quantity": 1,
+          "unit": "kg/quintal/bags",
+          "currentPrice": number,
+          "predictedPrice": number,
           "recommendation": "SELL_NOW" | "WAIT",
           "risk": "LOW" | "MEDIUM" | "HIGH",
-          "explanation": "Brief English analysis including recent news/trends found.",
-          "explanationTelugu": "Friendly Telugu audio script for the farmer. Use natural slang like 'రైతు సోదరులారా' (Brother farmer).",
+          "explanation": "Professional analysis in user's language.",
+          "explanationAudioScript": "A warm, friendly version for audio playback in user's language.",
           "daysToWait": number,
-          "profitDelta": number (Total extra money earned if waiting),
+          "profitDelta": number,
           "qualityGrade": "A" | "B" | "C" | null,
-          "qualityAssessment": string | null,
+          "qualityAssessment": "Detailed visual analysis summary" | null,
           "trendData": [{"day": "Mon", "price": number}, ...]
         }
       `
@@ -112,10 +71,10 @@ export const getMarketAnalysis = async (
           unit: { type: Type.STRING },
           currentPrice: { type: Type.NUMBER },
           predictedPrice: { type: Type.NUMBER },
-          recommendation: { type: Type.STRING, enum: Object.values(SellingRecommendation) },
-          risk: { type: Type.STRING, enum: Object.values(RiskLevel) },
+          recommendation: { type: Type.STRING, enum: ["SELL_NOW", "WAIT"] },
+          risk: { type: Type.STRING, enum: ["LOW", "MEDIUM", "HIGH"] },
           explanation: { type: Type.STRING },
-          explanationTelugu: { type: Type.STRING },
+          explanationAudioScript: { type: Type.STRING },
           daysToWait: { type: Type.NUMBER },
           profitDelta: { type: Type.NUMBER },
           qualityGrade: { type: Type.STRING, nullable: true },
@@ -131,7 +90,7 @@ export const getMarketAnalysis = async (
             }
           }
         },
-        required: ["crop", "quantity", "unit", "currentPrice", "predictedPrice", "recommendation", "risk", "explanation", "explanationTelugu", "daysToWait", "profitDelta", "trendData"]
+        required: ["crop", "currentPrice", "predictedPrice", "recommendation", "risk", "explanation", "explanationAudioScript", "trendData"]
       }
     }
   });
@@ -157,7 +116,7 @@ export const generateVoiceResponse = async (text: string): Promise<string | unde
   try {
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: `Say this naturally in a warm, respectful Telugu tone for a rural farmer: ${text}` }] }],
+      contents: [{ parts: [{ text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
