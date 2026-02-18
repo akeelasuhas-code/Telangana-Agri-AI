@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { PredictionData, SellingRecommendation, RiskLevel, GroundingSource } from "../types";
 
@@ -18,9 +17,10 @@ export const getMarketAnalysis = async (
 
         INSTRUCTIONS:
         1. LANGUAGE DETECTION: Respond in the SAME language as the query (Telugu or English).
-        2. LIVE SEARCH: Use Google Search to find real prices in Telangana Mandis.
-        3. QUALITY: Analyze the image if provided (Grade A, B, or C).
-        4. JSON ONLY RESPONSE.
+        2. LIVE SEARCH: Use Google Search to find real-time Mandi prices for the mentioned crop in Telangana.
+        3. QUALITY: If an image is provided, analyze the crop quality (Grade A, B, or C).
+        4. ANALYSIS: Provide a clear SELL or WAIT recommendation based on price trends.
+        5. OUTPUT: You must strictly return a JSON object.
       `
     }
   ];
@@ -73,7 +73,7 @@ export const getMarketAnalysis = async (
   });
 
   const text = response.text;
-  if (!text) throw new Error("AI returned empty response");
+  if (!text) throw new Error("AI response was empty. Please check your internet or API key.");
 
   const prediction = JSON.parse(text) as PredictionData;
   
