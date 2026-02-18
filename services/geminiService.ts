@@ -4,9 +4,6 @@ import { PredictionData, SellingRecommendation, RiskLevel, GroundingSource } fro
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
-/**
- * Intelligent multimodal analyst for market trends and quality.
- */
 export const getMarketAnalysis = async (
   query: string,
   imageBase64?: string,
@@ -20,30 +17,10 @@ export const getMarketAnalysis = async (
         LOCATION: ${location}
 
         INSTRUCTIONS:
-        1. LANGUAGE DETECTION: Detect if the query is in Telugu or English. Respond in the SAME language for both 'explanation' and 'explanationAudioScript'.
-        2. LIVE SEARCH: Use Google Search to find ACTUAL TODAY'S prices for the mentioned crop in Telangana Mandis.
-        3. MULTIMODAL QUALITY: If an image is provided, analyze the crop quality (A=Excellent, B=Good, C=Average).
-        4. PREDICTION: Forecast the price for the next 7 days. 
-           - Suggest WAIT if a price increase > 10% is expected.
-           - Suggest SELL_NOW if prices are peaking or likely to drop.
-
-        RETURN JSON:
-        {
-          "crop": "Name of crop",
-          "quantity": 1,
-          "unit": "kg/quintal/bags",
-          "currentPrice": number,
-          "predictedPrice": number,
-          "recommendation": "SELL_NOW" | "WAIT",
-          "risk": "LOW" | "MEDIUM" | "HIGH",
-          "explanation": "Professional analysis in user's language.",
-          "explanationAudioScript": "A warm, friendly version for audio playback in user's language.",
-          "daysToWait": number,
-          "profitDelta": number,
-          "qualityGrade": "A" | "B" | "C" | null,
-          "qualityAssessment": "Detailed visual analysis summary" | null,
-          "trendData": [{"day": "Mon", "price": number}, ...]
-        }
+        1. LANGUAGE DETECTION: Respond in the SAME language as the query (Telugu or English).
+        2. LIVE SEARCH: Use Google Search to find real prices in Telangana Mandis.
+        3. QUALITY: Analyze the image if provided (Grade A, B, or C).
+        4. JSON ONLY RESPONSE.
       `
     }
   ];
@@ -96,13 +73,10 @@ export const getMarketAnalysis = async (
   });
 
   const text = response.text;
-  if (!text) {
-    throw new Error("No response from AI");
-  }
+  if (!text) throw new Error("AI returned empty response");
 
   const prediction = JSON.parse(text) as PredictionData;
   
-  // Extract grounding sources
   const sources: GroundingSource[] = [];
   const chunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
   if (chunks) {
