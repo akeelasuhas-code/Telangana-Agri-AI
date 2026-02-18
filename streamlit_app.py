@@ -1,1 +1,0 @@
-# DEPRECATED: This file is no longer used. The project has moved to React/Vite.
