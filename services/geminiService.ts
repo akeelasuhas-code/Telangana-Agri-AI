@@ -95,7 +95,12 @@ export const getMarketAnalysis = async (
     }
   });
 
-  const prediction = JSON.parse(response.text) as PredictionData;
+  const text = response.text;
+  if (!text) {
+    throw new Error("No response from AI");
+  }
+
+  const prediction = JSON.parse(text) as PredictionData;
   
   // Extract grounding sources
   const sources: GroundingSource[] = [];
