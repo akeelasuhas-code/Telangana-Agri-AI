@@ -1,0 +1,8 @@
+{
+  "name": "Raithu Sell Smart AI",
+  "description": "An AI-powered advisory tool for Indian farmers to optimize crop selling times and maximize profits with Telugu voice support and quality assessment.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
